@@ -5,12 +5,24 @@
 
   <Commands package="guidSimpleP4VSPackage">
     <Groups>
-      <Group guid="guidCheckoutCommandSet" id="MyMenuGroup" priority="0x0600" />
+      <Group guid="guidCheckoutCommandSolutionViewSet" id="MyMenuGroup" priority="0x0600">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_ITEMNODE" />
+      </Group>
+      <Group guid="guidCheckoutCommandActiveDocumentSet" id="MyMenuGroup2" priority="0x0601">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_EZDOCWINTAB" />
+      </Group>
     </Groups>
 
     <Buttons>
-      <Button guid="guidCheckoutCommandSet" id="CheckoutCommandId" priority="0x0100" type="Button">
-        <Parent guid="guidCheckoutCommandSet" id="MyMenuGroup" />
+      <Button guid="guidCheckoutCommandSolutionViewSet" id="CheckoutCommandSolutionViewId" priority="0x0100" type="Button">
+        <Parent guid="guidCheckoutCommandSolutionViewSet" id="MyMenuGroup" />
+        <Icon guid="guidImages" id="bmpPicX" />
+        <Strings>
+          <ButtonText>Check out in Perforce...</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCheckoutCommandActiveDocumentSet" id="CheckoutCommandActiveDocumentId" priority="0x0101" type="Button">
+        <Parent guid="guidCheckoutCommandActiveDocumentSet" id="MyMenuGroup2" />
         <Icon guid="guidImages" id="bmpPicX" />
         <Strings>
           <ButtonText>Check out in Perforce...</ButtonText>
@@ -23,23 +35,17 @@
     </Bitmaps>
   </Commands>
 
-  <CommandPlacements>
-    <!--This is the Solution Explorer file context menu.-->
-    <CommandPlacement guid="guidCheckoutCommandSet" id="MyMenuGroup" priority="0x605">
-      <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_ITEMNODE" />
-    </CommandPlacement>
-    <!--This is the open file tabs.-->
-    <CommandPlacement guid="guidCheckoutCommandSet" id="MyMenuGroup" priority="0x605">
-      <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_EZDOCWINTAB" />
-    </CommandPlacement>
-  </CommandPlacements>
-  
   <Symbols>
     <GuidSymbol name="guidSimpleP4VSPackage" value="{c8d6b77d-e87a-40fc-9449-ac12bbd057ba}" />
 
-    <GuidSymbol name="guidCheckoutCommandSet" value="{e96a66aa-6fc0-4426-8b97-2c140322fbe9}">
-      <IDSymbol name="CheckoutCommandId" value="0x0100" />
+    <GuidSymbol name="guidCheckoutCommandSolutionViewSet" value="{e96a66aa-6fc0-4426-8b97-2c140322fbe9}">
+      <IDSymbol name="CheckoutCommandSolutionViewId" value="0x0100" />
       <IDSymbol name="MyMenuGroup" value="0x1020" />
+    </GuidSymbol>
+    
+    <GuidSymbol name="guidCheckoutCommandActiveDocumentSet" value="{f61b530a-73b2-4e07-b6e1-35aeb8dc27c2}">
+      <IDSymbol name="CheckoutCommandActiveDocumentId" value="0x0101" />
+      <IDSymbol name="MyMenuGroup2" value="0x1021" />
     </GuidSymbol>
 
     <GuidSymbol name="guidImages" value="{61e1d474-cd3f-45fe-be8f-7a84036332c1}" >

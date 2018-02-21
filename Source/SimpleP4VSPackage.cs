@@ -23,11 +23,12 @@ namespace SimpleP4VS
         protected override async Task InitializeAsync(CancellationToken cancellationToken, IProgress<Microsoft.VisualStudio.Shell.ServiceProgressData> progress)
         {
             //Options = (Options)GetDialogPage(typeof(Options));
-            var commandService = await GetServiceAsync(typeof(IMenuCommandService)) as OleMenuCommandService;
+            OleMenuCommandService commandService = await GetServiceAsync(typeof(IMenuCommandService)) as OleMenuCommandService;
 
             if (commandService != null)
             {
-                CheckoutCommand.Initialize(this, commandService);
+                CheckoutCommandActiveDocument.Initialize(this, commandService);
+                CheckoutCommandSolutionView.Initialize(this, commandService);
             }
         }
     }
