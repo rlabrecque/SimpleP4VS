@@ -4,6 +4,7 @@ namespace SimpleP4VS
 {
     using System;
     using System.ComponentModel.Design;
+    using System.Diagnostics;
     using System.Runtime.InteropServices;
     using EnvDTE;
     using Microsoft.VisualStudio;
@@ -34,7 +35,7 @@ namespace SimpleP4VS
             Instance = new CheckoutCommand(package, commandService);
         }
 
-        void BeforeQueryStatus(object sender, EventArgs e)
+        void BeforeQueryStatus(object sender, EventArgs eventArgs)
         {
             //var button = (OleMenuCommand)sender;
 
@@ -43,9 +44,9 @@ namespace SimpleP4VS
             VsShellUtilities.LogMessage("Test", "BeginQueryStatus !!!!!", __ACTIVITYLOG_ENTRYTYPE.ALE_INFORMATION);
         }
 
-        private void OnExecute(object sender, EventArgs e)
+        private void OnExecute(object sender, EventArgs eventArgs)
         {
-            // get the menu that fired the event
+            // Get the menu that fired the event
             var menuCommand = sender as OleMenuCommand;
             if (menuCommand == null)
             {
@@ -60,16 +61,20 @@ namespace SimpleP4VS
                 return;
             }
 
-            ProjectItem projectItem;
+            ProjectItem[] projectItems;
             try
             {
-                projectItem = GetProjectItem();
+                projectItems = GetProjectItems();
+                if(projectItems == null)
+                {
+                    throw new NullReferenceException("GetProjectItem returned null");
+                }
             }
-            catch
+            catch(Exception e)
             {
                 VsShellUtilities.ShowMessageBox(
                     ServiceProvider,
-                    "Could not check out file, GetProjectItem failed.",
+                    "Could not check out file, GetProjectItem failed.\nException: " + e.Message,
                     "SimpleP4VS - Error: Can not check out file.",
                     OLEMSGICON.OLEMSGICON_WARNING,
                     OLEMSGBUTTON.OLEMSGBUTTON_OK,
@@ -117,7 +122,7 @@ namespace SimpleP4VS
             if(!bConnected)
             {
                 VsShellUtilities.ShowMessageBox(
-                    this.ServiceProvider,
+                    ServiceProvider,
                     "Connection to Perforce with: P4PORT:{0}, P4USER:{1}, P4CLIENT:{2} failed.",
                     "SimpleP4VS - Error: Could not connect to Perforce.",
                     OLEMSGICON.OLEMSGICON_WARNING,
@@ -128,7 +133,15 @@ namespace SimpleP4VS
 
             try
             {
-                con.Client.EditFiles(new Options(), new FileSpec[] { new FileSpec(new ClientPath(projectItem.FileNames[0])) });
+                FileSpec[] filespecs = new FileSpec[projectItems.Length];
+                int i = 0;
+                foreach(ProjectItem item in projectItems)
+                {
+                    filespecs[i] = new FileSpec(new ClientPath(item.FileNames[0]));
+                    ++i;
+                }
+
+                con.Client.EditFiles(new Options(), filespecs);
             }
             finally
             {
@@ -136,19 +149,72 @@ namespace SimpleP4VS
             }
         }
 
-        private static ProjectItem GetProjectItem()
+        private ProjectItem[] GetProjectItems()
         {
             IVsMonitorSelection monitorSelection = Package.GetGlobalService(typeof(SVsShellMonitorSelection)) as IVsMonitorSelection;
-
-            monitorSelection.GetCurrentSelection(out IntPtr hierarchyPointer, out uint projectItemId, out IVsMultiItemSelect multiItemSelect, out IntPtr selectionContainerPointer);
-
-            Object selectedObject = null;
-            if (Marshal.GetTypedObjectForIUnknown(hierarchyPointer, typeof(IVsHierarchy)) is IVsHierarchy selectedHierarchy)
+            if (monitorSelection == null)
             {
-                ErrorHandler.ThrowOnFailure(selectedHierarchy.GetProperty((uint)VSConstants.VSITEMID.Selection, (int)__VSHPROPID.VSHPROPID_ExtObject, out selectedObject));
+                Debug.Fail("Failed to get SVsShellMonitorSelection service.");
+                return null;
             }
 
-            return selectedObject as ProjectItem;
+            ErrorHandler.ThrowOnFailure(
+                monitorSelection.GetCurrentSelection(
+                    out IntPtr hierarchyPointer,
+                    out uint projectItemId,
+                    out IVsMultiItemSelect multiItemSelect,
+                    out IntPtr selectionContainerPointer));
+
+            if (selectionContainerPointer != IntPtr.Zero)
+            {
+                Marshal.Release(selectionContainerPointer);
+                selectionContainerPointer = IntPtr.Zero;
+            }
+
+            if (projectItemId == (uint)VSConstants.VSITEMID.Selection)
+            {
+                ErrorHandler.ThrowOnFailure(
+                    multiItemSelect.GetSelectionInfo(
+                    out uint itemCount,
+                    out int fSingleHierarchy));
+                
+                VSITEMSELECTION[] items = new VSITEMSELECTION[itemCount];
+                ErrorHandler.ThrowOnFailure(
+                    multiItemSelect.GetSelectedItems(0, itemCount, items));
+
+                ProjectItem[] projectItems = new ProjectItem[itemCount];
+
+                int i = 0;
+                foreach (VSITEMSELECTION item in items)
+                {
+                    ErrorHandler.ThrowOnFailure(
+                       item.pHier.GetProperty(
+                        item.itemid,
+                        (int)__VSHPROPID.VSHPROPID_ExtObject,
+                        out object selectedObject));
+
+                    projectItems[i] = selectedObject as ProjectItem;
+                    ++i;
+                }
+
+                return projectItems;
+            }
+
+            // Case where no visible project is open (single file)
+            if (hierarchyPointer != IntPtr.Zero)
+            {
+                IVsHierarchy selectedHierarchy = Marshal.GetUniqueObjectForIUnknown(hierarchyPointer) as IVsHierarchy;
+
+                ErrorHandler.ThrowOnFailure(
+                    selectedHierarchy.GetProperty(
+                    projectItemId,
+                    (int)__VSHPROPID.VSHPROPID_ExtObject,
+                    out object selectedObject));
+
+                return new ProjectItem[] { selectedObject as ProjectItem };
+            }
+
+            return null;
         }
     }
 }
