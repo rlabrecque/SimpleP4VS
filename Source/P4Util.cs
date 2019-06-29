@@ -12,29 +12,27 @@ namespace SimpleP4VS {
 	using Perforce.P4;
 
 	internal static class P4Util {
-		internal static void CheckoutFiles(IServiceProvider ServiceProvider, ProjectItem[] projectItems) {
-			string P4PORT = Environment.GetEnvironmentVariable("P4PORT");
-			string P4USER = Environment.GetEnvironmentVariable("P4USER");
-			string P4CLIENT = Environment.GetEnvironmentVariable("P4CLIENT");
-			if ((P4PORT == null) || (P4USER == null) || (P4CLIENT == null)) {
+		internal static void CheckoutFiles(IServiceProvider ServiceProvider, ProjectItem[] projectItems)
+		{
+			if(projectItems == null || projectItems.Length == 0)
+			{
 				VsShellUtilities.ShowMessageBox(
 					ServiceProvider,
-					"P4PORT, P4USER, or P4CLIENT have not been set globally. Please set these and try again. See Perforce documentation for more details.",
-					"SimpleP4VS - Error: Perforce not set up.",
+					"No project items passed.",
+					"SimpleP4VS - Error: Checkout failed",
 					OLEMSGICON.OLEMSGICON_WARNING,
 					OLEMSGBUTTON.OLEMSGBUTTON_OK,
 					OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
 				return;
 			}
 
+			string fileDirectory = System.IO.Path.GetDirectoryName(projectItems[0].FileNames[0]);
+
 			// Define the server, repository and connection
-			Server server = new Server(new ServerAddress(P4PORT));
+			P4Server p4server = new P4Server(fileDirectory);
+			Server server = new Server(new ServerAddress(p4server.Port));
 			Repository rep = new Repository(server);
 			Connection con = rep.Connection;
-			con.UserName = P4USER;
-			con.Client = new Client {
-				Name = P4CLIENT
-			};
 
 			// Initialize the connection options
 			// This information will appear when commands are
@@ -42,7 +40,8 @@ namespace SimpleP4VS {
 			// [ProgramName/ProgramVersion]
 			Options options = new Options {
 				["ProgramName"] = "SimpleP4VS",
-				["ProgramVersion"] = "2017.01.18"
+				["ProgramVersion"] = "2017.01.18",
+				["cwd"] = fileDirectory
 			};
 
 			// Connect to the server
@@ -50,7 +49,7 @@ namespace SimpleP4VS {
 			if (!bConnected) {
 				VsShellUtilities.ShowMessageBox(
 					ServiceProvider,
-					"Connection to Perforce with: P4PORT:{0}, P4USER:{1}, P4CLIENT:{2} failed.",
+					"Connection to Perforce with failed.",
 					"SimpleP4VS - Error: Could not connect to Perforce.",
 					OLEMSGICON.OLEMSGICON_WARNING,
 					OLEMSGBUTTON.OLEMSGBUTTON_OK,
