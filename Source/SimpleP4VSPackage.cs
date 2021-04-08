@@ -27,6 +27,7 @@ namespace SimpleP4VS
 
             if (commandService != null)
             {
+                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
                 CheckoutCommandActiveDocument.Initialize(this, commandService);
                 CheckoutCommandSolutionView.Initialize(this, commandService);
             }
