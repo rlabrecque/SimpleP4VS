@@ -35,6 +35,8 @@ namespace SimpleP4VS
         
         private void OnExecute(object sender, EventArgs eventArgs)
         {
+            ThreadHelper.ThrowIfNotOnUIThread();
+
             // Get the menu that fired the event
             OleMenuCommand menuCommand = sender as OleMenuCommand;
             if (menuCommand == null)
@@ -76,6 +78,8 @@ namespace SimpleP4VS
 
         private ProjectItem[] GetProjectItems()
         {
+            ThreadHelper.ThrowIfNotOnUIThread();
+
             IVsMonitorSelection monitorSelection = Package.GetGlobalService(typeof(SVsShellMonitorSelection)) as IVsMonitorSelection;
             if (monitorSelection == null)
             {

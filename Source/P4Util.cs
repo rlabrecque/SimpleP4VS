@@ -14,7 +14,9 @@ namespace SimpleP4VS {
 	internal static class P4Util {
 		internal static void CheckoutFiles(IServiceProvider ServiceProvider, ProjectItem[] projectItems)
 		{
-			if(projectItems == null || projectItems.Length == 0)
+			ThreadHelper.ThrowIfNotOnUIThread();
+
+			if (projectItems == null || projectItems.Length == 0)
 			{
 				VsShellUtilities.ShowMessageBox(
 					ServiceProvider,
