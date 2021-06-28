@@ -1,6 +1,6 @@
 # SimpleP4VS
 
-This is a Visual Studio 2017/2019 plugin which provides an extremely minimal amount of perforce features.
+This is a Visual Studio 2022 plugin which provides an extremely minimal amount of perforce features.
 
 It exists to let us accomplish the most common actions in a reasonable manner, while not slowing down the editor like other perforce plugins.
 
